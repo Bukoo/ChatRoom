@@ -1,42 +1,52 @@
-package UI;
+package src.UI;
+
 import javax.swing.*;
+
+import src.Client;
+
 import java.awt.*;
 import java.awt.event.*;
+import java.io.ByteArrayInputStream;
 import java.text.DateFormat;
 import java.util.Date;
  
 public class PublicChatRoom extends JFrame implements MouseListener {
 
-    private static final long serialVersionUID = 1L;
-    public static void main(String[] args) {
-        new PublicChatRoom();
-    }
+	private static final long serialVersionUID = 1L;
+
+	private static Client client;
+
     private JFrame frame;
     private JTextArea viewArea;
     private JTextArea inputField;
     private JButton sendButton;
     //private JButton cancelButton;
-    private JLabel myStatus;
-    private JLabel myName;
+    private JLabel myPort;
+    private JLabel myIP;
     private JLabel TMP;
     private JButton sendFile;
     private JButton sendPic;
+    private String message;
+    private JScrollPane scrollUserListWindow;
+    private UserList userlistWin;
+    JPanel leftPanel = new JPanel();
+    JPanel rightPanel = new JPanel();
+    
 
-
-    public PublicChatRoom(){
+    public PublicChatRoom(Client _client){
+    	client = _client;
     	
+    	requestName();
+        requestList();
+
     	
         frame = new JFrame("Default Chat Room");
-        //frame.setLocationRelativeTo(null);
         GridBagLayout leftGrid = new GridBagLayout();
-        //GridBagLayout rightGrid = new GridBagLayout();
-        
         GridBagLayout mainGrid = new GridBagLayout();
         frame.setLayout(mainGrid);
         
         //左右两部分
-        JPanel leftPanel = new JPanel();
-        JPanel rightPanel = new JPanel();
+
         leftPanel.setLayout(leftGrid);
         //rightPanel.setLayout(rightGrid);
 
@@ -54,12 +64,10 @@ public class PublicChatRoom extends JFrame implements MouseListener {
         inputField.setLineWrap(true);
         
         //组件
-        myStatus = new JLabel();
-        myStatus.setText("在线");	//拿用户状态填充
+        myPort = new JLabel();
         TMP = new JLabel();
-        TMP.setText("  ----------------  ");
-        myName = new JLabel();
-        myName.setText("飞翔的企鹅");	//拿用户名填充
+        myIP = new JLabel();
+
         sendButton = new JButton("Send");
         
         sendFile = new JButton();
@@ -69,9 +77,9 @@ public class PublicChatRoom extends JFrame implements MouseListener {
 
         //滚动条聊天窗口
         JScrollPane sp1 = new JScrollPane(viewArea);
-        sp1.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        sp1.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         JScrollPane sp2 = new JScrollPane(inputField);
-        sp2.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        sp2.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         
         //布局
 
@@ -89,11 +97,12 @@ public class PublicChatRoom extends JFrame implements MouseListener {
         s.weightx = 40;
         s.weighty = 1;
         mainGrid.setConstraints(leftPanel, s);
-        s.gridy = 0;
+    	s.gridy = 0;
         s.gridx = 40;
         s.weightx = 1;
         s.weighty = 1;
         mainGrid.setConstraints(rightPanel, s);
+        
         
         //左部分布局
         leftPanel.add(viewAreaPanel);
@@ -125,12 +134,6 @@ public class PublicChatRoom extends JFrame implements MouseListener {
         //buttonPanel.setBackground(Color.cyan);
         leftGrid.setConstraints(buttonPanel, s);
         
-        //右部分布局
-
-        rightPanel.add(myName);
-        rightPanel.add(TMP);
-        rightPanel.add(myStatus);
-        
         //viewAreaPanel 布局
         viewAreaPanel.add(sp1);
         GridBagLayout viewAreaGrid = new GridBagLayout();
@@ -146,13 +149,13 @@ public class PublicChatRoom extends JFrame implements MouseListener {
         sendPic.setBounds(50,3,20,20);
         sendPic.setBorderPainted(false);
         
-        ImageIcon filepic = new ImageIcon("src/images/file.jpg");
+        ImageIcon filepic = new ImageIcon("images/file.jpg");
         int width = (int)sendFile.getWidth();
         int height = (int)sendFile.getHeight();
         filepic.setImage(filepic.getImage().getScaledInstance(width, height, Image.SCALE_DEFAULT));
         sendFile.setIcon(filepic);
         
-        ImageIcon picpic = new ImageIcon("src/images/pic.png");
+        ImageIcon picpic = new ImageIcon("images/pic.png");
         int width1 = (int)sendPic.getWidth();
         int height1 = (int)sendPic.getHeight();
         picpic.setImage(picpic.getImage().getScaledInstance(width1, height1, Image.SCALE_DEFAULT));
@@ -174,31 +177,125 @@ public class PublicChatRoom extends JFrame implements MouseListener {
         buttonPanel.add(tempPanel, BorderLayout.EAST);
 
         sendButton.addMouseListener((MouseListener) this);
-        }
+        
+        //右部分布局
+    	// 右侧用户列表
+    	userlistWin = new UserList(client, client.getUserlist());
+    	scrollUserListWindow = new JScrollPane(userlistWin);
 
-    
- 
-    public void mouseClicked(MouseEvent evt){
-        String message = "";
-        Date date = new Date();
-        DateFormat df = DateFormat.getDateTimeInstance();
-        String formatDate = df.format(date);
-        message="  "+myName.getText()+"    "+formatDate+"\n  "+inputField.getText();
-        if(evt.getSource()==sendButton){
-        	if ("".equals(inputField.getText())) {
-        		// 不进行反应
-        	} else {
-        		viewArea.setText(viewArea.getText()+message+ "\n\n");
-        		inputField.setText("");
-        	}
-        }
+        userlistWin.setOpaque(true);
+        scrollUserListWindow.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollUserListWindow.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollUserListWindow.setPreferredSize(new Dimension(180, 150));
+        rightPanel.add(scrollUserListWindow);
+    	
     }
-     
+    private void requestName() {
+        client.requestClientname();
+        client.input();
+        System.setIn(new ByteArrayInputStream("".getBytes()));
+    }
+
+    private void requestList() {
+        client.requestUserlist();
+        client.input();
+        //System.out.println(client.getUserlist()+"aaaaaaaaaaaaaa");
+        System.setIn(new ByteArrayInputStream("".getBytes()));
+    }
     
-    
-    public void mousePressed(MouseEvent evt){ }
-    public void mouseReleased(MouseEvent evt){ }
-    public void mouseEntered(MouseEvent e){ }
-    public void mouseExited(MouseEvent e){ }
-     
+	    public void mouseClicked(MouseEvent evt){
+	        String messages = "";
+	        Date date = new Date();
+	        DateFormat df = DateFormat.getDateTimeInstance();
+	        String formatDate = df.format(date);
+	        messages="  "+myIP.getText()+"    "+formatDate+"\n  "+inputField.getText();
+	        if (message == "  "+myIP.getText()+"    "+formatDate+"\n  ")
+	        setMessage(messages);
+	        if (messages == "") {
+	    		
+	    	} else {
+	    		viewArea.setText(viewArea.getText()+messages+ "\n\n");
+	    		inputField.setText("");
+	    		setMessage("");
+	    	}
+	        
+	    }
+	     
+	    public void setMessage(String msg) {
+	    	message = msg;
+	
+	    }
+	    public void appendChatWindowText(String msg) {
+	    	if (msg == "") {
+	    		
+	    	} else {
+	    		viewArea.setText(viewArea.getText()+msg+ "\n\n");
+	    		inputField.setText("");
+	    		setMessage("");
+	    	}
+	        
+	    }
+	    public String getMessage(){
+	    	return message;
+	    }
+	
+		public void appendPrivateChatWindowText(String msg) {
+			// TODO Auto-generated method stub
+			if (msg == "  ") {
+			} else {
+				viewArea.setText(viewArea.getText()+msg+ "\n\n");
+				inputField.setText("");				
+			}
+		}
+	
+	
+		public void refreshUserlist() {
+			// TODO Auto-generated method stub
+	        rightPanel.remove(scrollUserListWindow);
+	        // refresh the new user list
+	        userlistWin = new UserList(client, client.getUserlist());
+	        remove(scrollUserListWindow);
+	        scrollUserListWindow = new JScrollPane(userlistWin);
+	        //addUserlistWindow();
+
+	        
+	        scrollUserListWindow = new JScrollPane(userlistWin);
+	        scrollUserListWindow.setHorizontalScrollBarPolicy(
+	            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+	        scrollUserListWindow.setVerticalScrollBarPolicy(
+	            ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+	        scrollUserListWindow.setPreferredSize(new Dimension(180, 150));
+	        revalidate();
+	        repaint();
+	        rightPanel.add(scrollUserListWindow);
+			
+		}
+
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		@Override
+		public void mouseExited(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
     }

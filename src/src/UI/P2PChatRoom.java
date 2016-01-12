@@ -1,29 +1,32 @@
-package UI;
+package src.UI;
+
 import javax.swing.*;
+
+import src.Client;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.HashMap;
  
 public class P2PChatRoom extends JFrame implements MouseListener {
 
     private static final long serialVersionUID = 1L;
-    public static void main(String[] args) {
-        new P2PChatRoom();
-    }
     private JFrame frame;
     private JTextArea viewArea;
     private JTextArea inputField;
     private JButton sendButton;
     //private JButton cancelButton;
-    private JLabel friendStatus;
-    private JLabel friendName;
+    private JLabel friendPort;
+    private JLabel friendIP;
     private JLabel TMP;
     private JButton sendFile;
     private JButton sendPic;
+    private String message;
 
 
-    public P2PChatRoom(){
+    public P2PChatRoom(Client client, String ip,HashMap<String, P2PChatRoom> map){
     	
     	
         frame = new JFrame("P2P Chat Room");
@@ -50,13 +53,13 @@ public class P2PChatRoom extends JFrame implements MouseListener {
         inputField.setLineWrap(true);
         
         //组件
-        friendStatus = new JLabel();
-        friendStatus.setText("在线");	//拿用户状态填充
-        friendName = new JLabel();
-        friendName.setText("我爱祖国");	//拿用户名填充
+        friendPort = new JLabel();
+        friendPort.setText(String.valueOf(client.getPort()));	//拿用户状态填充
+        friendIP = new JLabel();
+        friendIP.setText(client.getIP());	//拿用户名填充
         TMP = new JLabel();
-        TMP.setText(" -- ");
-        frame.setTitle(friendName.getText()+TMP.getText()+friendStatus.getText());
+        TMP.setText(":");
+        frame.setTitle(friendIP.getText()+TMP.getText()+friendPort.getText());
         
         sendButton = new JButton("Send");
         sendFile = new JButton();
@@ -130,13 +133,13 @@ public class P2PChatRoom extends JFrame implements MouseListener {
         sendPic.setBounds(50,3,20,20);
         sendPic.setBorderPainted(false);
         
-        ImageIcon filepic = new ImageIcon("src/images/file.jpg");
+        ImageIcon filepic = new ImageIcon("images/file.jpg");
         int width = (int)sendFile.getWidth();
         int height = (int)sendFile.getHeight();
         filepic.setImage(filepic.getImage().getScaledInstance(width, height, Image.SCALE_DEFAULT));
         sendFile.setIcon(filepic);
         
-        ImageIcon picpic = new ImageIcon("src/images/pic.png");
+        ImageIcon picpic = new ImageIcon("images/pic.png");
         int width1 = (int)sendPic.getWidth();
         int height1 = (int)sendPic.getHeight();
         picpic.setImage(picpic.getImage().getScaledInstance(width1, height1, Image.SCALE_DEFAULT));
@@ -163,23 +166,30 @@ public class P2PChatRoom extends JFrame implements MouseListener {
     
  
     public void mouseClicked(MouseEvent evt){
-        String message = "";
+        String messages = "";
         Date date = new Date();
         DateFormat df = DateFormat.getDateTimeInstance();
         String formatDate = df.format(date);
-        message="  "+friendName.getText()+"    "+formatDate+"\n  "+inputField.getText();
-        if(evt.getSource()==sendButton){
-        	if ("".equals(inputField.getText())) {
-        		// 不进行反应
-        	} else {
-        		viewArea.setText(viewArea.getText()+message+ "\n\n");
-        		inputField.setText("");
-        	}
-        }
+        messages="  "+friendIP.getText()+"    "+formatDate+"\n  "+inputField.getText();
+        setMessage(messages);
     }
      
-    
-    
+    public void setMessage(String msg) {
+    	message = msg;
+
+    }
+    public void appendPrivateChatWindowText(String msg) {
+    	if (msg == "  ") {
+    	} else {
+	        viewArea.setText(viewArea.getText()+msg+ "\n\n");
+	        inputField.setText("");
+	        setMessage("");
+    	}
+    }
+    public String getMessage(){
+    	return message;
+    }
+
     public void mousePressed(MouseEvent evt){ }
     public void mouseReleased(MouseEvent evt){ }
     public void mouseEntered(MouseEvent e){ }
