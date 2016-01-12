@@ -14,28 +14,14 @@ public class newClient {
             System.out.print("");
         }
         client = new Client(userInfo.getIp(),userInfo.getPortNum());
-        /*if (client == null) {
-        	System.out.println("the client is null");
-        } else {
-        	System.out.println("the client is real");
-        }
-        System.out.println(userInfo.getIp());
-        System.out.println(userInfo.getPortNum());
-        
-        client.requestUserlist();
-        System.out.println(client.getUserlist()+"bbbbbbbbbbbb");
-        //System.out.println(client.input());
-        System.setIn(new ByteArrayInputStream("".getBytes()));
-        
-        //System.out.println("Œ¥‘À––public ±flag£∫"+client.input());*/
         
         PublicChatRoom ui = new PublicChatRoom(client);
 
-        System.out.println("enter input");
+        //System.out.println("enter input");
         while(true){
             int flag = client.input();
             if (flag == 1) {
-                ui.appendChatWindowText(ui.getMessage());
+                ui.appendChatWindowText();
             } else if (flag == 2) {
                 ui.appendPrivateChatWindowText(ui.getMessage());
             } else if (flag == 3) {

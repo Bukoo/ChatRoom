@@ -93,21 +93,21 @@ public class Server extends JFrame {
 		private DataOutputStream toclient;
 		//private PrintWriter myPrintWriter;
 		private String myStrMSG;
-		String ipAddress;  // 璁板綍瀹㈡埛绔殑ip
-		int port;  // 璁板綍瀹㈡埛绔殑绔彛
+		//private String message;
+		String ipAddress;
+		int port;
 
 		public ThreadServer(Socket socket) throws IOException {
 			this.client = socket;
 			ipAddress = socket.getInetAddress().toString();  // 璁板綍瀹㈡埛绔殑ip
 			port = socket.getPort();  // 璁板綍瀹㈡埛绔殑绔彛
 			dis = new DataInputStream(client.getInputStream());
-			myStrMSG = "鐢ㄦ埛锛�" + this.client.getInetAddress() + "涓婄嚎浜嗭紒 鐢ㄦ埛鎬绘暟锛�" + myClientList.size();
+			myStrMSG = "上线啦 ~" + "现有" + myClientList.size()+"人在线\n";
 			sendMessageToAllClient();
 		}
-		@SuppressWarnings("deprecation")
 		public void run() {
 			try {
-				while((myStrMSG = dis.readLine()) != null) {
+				while((myStrMSG = dis.readUTF()) != null) {
 					jTextArea.append(myStrMSG+ "\n");
 					messageRecog(myStrMSG); // 璇嗗埆瀹㈡埛绔彂閫佺殑娑堟伅绫诲瀷
 				}
@@ -124,7 +124,8 @@ public class Server extends JFrame {
 				DataOutputStream toclient;
 				toclient = new DataOutputStream(client.getOutputStream());
 				String toclientMessage = myStrMSG;
-				toclientMessage = "鏉ヨ嚜" + "["+ ipAddress + "]" + "["+ port + "]鐨勬秷鎭�" + ":" + myStrMSG;
+				toclientMessage = "message_all" + "["+ ipAddress + "]" + "["+ port + "]" + ":" + myStrMSG;
+				//toclientMessage = "message_all" + myStrMSG;
 				toclient.writeUTF(toclientMessage);
 			}
 		}

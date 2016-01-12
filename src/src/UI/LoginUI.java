@@ -143,11 +143,5 @@ public class LoginUI {
         userInfo.setFlag(false);
         userInfo.setIp(_user);
         userInfo.setPortNum(Integer.parseInt(_port));
-		//new PublicChatRoom(new Client(_user, Integer.parseInt(_port)));
 	}
-	
-	//public static void main(String[] args) {
-      //  new LoginUI(userInfo);
-    //}
-
 }

@@ -39,7 +39,6 @@ public class PublicChatRoom extends JFrame implements MouseListener {
     	requestName();
         requestList();
 
-    	
         frame = new JFrame("Default Chat Room");
         GridBagLayout leftGrid = new GridBagLayout();
         GridBagLayout mainGrid = new GridBagLayout();
@@ -176,7 +175,7 @@ public class PublicChatRoom extends JFrame implements MouseListener {
         tempPanel.setSize(80,50);
         buttonPanel.add(tempPanel, BorderLayout.EAST);
 
-        sendButton.addMouseListener((MouseListener) this);
+        sendButton.addActionListener(new sendButtonListener());
         
         //右部分布局
     	// 右侧用户列表
@@ -202,50 +201,40 @@ public class PublicChatRoom extends JFrame implements MouseListener {
         //System.out.println(client.getUserlist()+"aaaaaaaaaaaaaa");
         System.setIn(new ByteArrayInputStream("".getBytes()));
     }
-    
-	    public void mouseClicked(MouseEvent evt){
-	        String messages = "";
-	        Date date = new Date();
-	        DateFormat df = DateFormat.getDateTimeInstance();
-	        String formatDate = df.format(date);
-	        messages="  "+myIP.getText()+"    "+formatDate+"\n  "+inputField.getText();
-	        if (message == "  "+myIP.getText()+"    "+formatDate+"\n  ")
-	        setMessage(messages);
-	        if (messages == "") {
-	    		
-	    	} else {
-	    		viewArea.setText(viewArea.getText()+messages+ "\n\n");
-	    		inputField.setText("");
-	    		setMessage("");
-	    	}
-	        
+
+
+		private class sendButtonListener implements ActionListener {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				// TODO Auto-generated method stub
+				if (inputField.getText() == "") {
+			        setMessage("");
+			    } else {
+			        String messages = "";
+				    Date date = new Date();
+				    DateFormat df = DateFormat.getDateTimeInstance();
+				    String formatDate = df.format(date);
+				    messages="  "+formatDate+"\n  "+inputField.getText() + "\n";
+			        setMessage(messages);
+			    	client.message_to_all(getMessage());
+			    	inputField.setText("");
+				}
+			}
 	    }
-	     
 	    public void setMessage(String msg) {
 	    	message = msg;
-	
-	    }
-	    public void appendChatWindowText(String msg) {
-	    	if (msg == "") {
-	    		
-	    	} else {
-	    		viewArea.setText(viewArea.getText()+msg+ "\n\n");
-	    		inputField.setText("");
-	    		setMessage("");
-	    	}
-	        
 	    }
 	    public String getMessage(){
 	    	return message;
 	    }
-	
-		public void appendPrivateChatWindowText(String msg) {
+	    
+	    public void appendChatWindowText() {
+	    	viewArea.setText(viewArea.getText()+client.getMessage());
+	    }
+
+		public void appendPrivateChatWindowText(String sender) {
 			// TODO Auto-generated method stub
-			if (msg == "  ") {
-			} else {
-				viewArea.setText(viewArea.getText()+msg+ "\n\n");
-				inputField.setText("");				
-			}
+			viewArea.setText(viewArea.getText()+ "\n\n");
 		}
 	
 	
@@ -254,12 +243,8 @@ public class PublicChatRoom extends JFrame implements MouseListener {
 	        rightPanel.remove(scrollUserListWindow);
 	        // refresh the new user list
 	        userlistWin = new UserList(client, client.getUserlist());
-	        remove(scrollUserListWindow);
 	        scrollUserListWindow = new JScrollPane(userlistWin);
-	        //addUserlistWindow();
-
 	        
-	        scrollUserListWindow = new JScrollPane(userlistWin);
 	        scrollUserListWindow.setHorizontalScrollBarPolicy(
 	            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 	        scrollUserListWindow.setVerticalScrollBarPolicy(
@@ -295,6 +280,11 @@ public class PublicChatRoom extends JFrame implements MouseListener {
 
 		@Override
 		public void mouseReleased(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+		@Override
+		public void mouseClicked(MouseEvent e) {
 			// TODO Auto-generated method stub
 			
 		}
