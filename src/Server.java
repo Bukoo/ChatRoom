@@ -1,0 +1,194 @@
+package src;
+import java.awt.*;
+import javax.swing.*;
+
+import java.io.*;
+
+import java.net.ServerSocket;
+import java.net.Socket;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import java.util.*;
+
+public class Server extends JFrame {
+	
+	private static final long serialVersionUID = 1L;
+	private ServerSocket serverSocket;
+	// sign in port
+	private static final int SERVERPORT = 54321;
+	private ExecutorService executorService;
+    // a socket for a client
+	private static ArrayList<Socket> myClientList = new ArrayList<Socket>();
+	private static JTextArea jTextArea = new JTextArea();
+	public Server() {
+		JFrame frame = new JFrame();
+		
+		// server components
+		frame.add(new JScrollPane(jTextArea));
+		frame.setTitle("MINET Server");
+		frame.setVisible(true);
+		frame.setSize(300, 500);
+		frame.setLocation(200,100);
+		// give server a icon with image.png
+		frame.setIconImage(Toolkit.getDefaultToolkit().createImage
+			(Server.class.getResource("image.png")));
+		
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		try {
+			// build a new TCP connection
+			serverSocket = new ServerSocket(SERVERPORT);
+			// build a new cached thread pool
+			executorService = Executors.newCachedThreadPool();
+			jTextArea.append("Welcome to sign in MINET-Server!~\n");
+			Socket client = null;
+			while (true) {
+				// wait for accept connection request
+				client = serverSocket.accept();
+				myClientList.add(client);
+				// send client list to every client
+				sendNewClientList();
+				// run one client thread
+				executorService.execute(new ThreadServer(client));
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	// refresh client list
+		static public void sendNewClientList() throws IOException {
+			String list ="request_list";
+
+			for (Socket client:myClientList) {
+				list += "["+client.getInetAddress()+"]"+"["+client.getPort()+"]"+"\n";
+			}
+			for (Socket client:myClientList) {
+				DataOutputStream toclient;
+			    toclient = new DataOutputStream(client.getOutputStream());
+			    toclient.writeUTF(list);
+			}
+		}
+
+
+	static class ThreadServer implements Runnable {
+		private Socket client;
+		private DataInputStream dis;
+		private DataOutputStream toclient;
+		private String myStrMSG;
+		String ipAddress;
+		int port;
+
+		public ThreadServer(Socket socket) throws IOException {
+			this.client = socket;
+			ipAddress = socket.getInetAddress().toString();
+			port = socket.getPort();
+			dis = new DataInputStream(client.getInputStream());
+			if (myClientList.size() == 1) {
+				myStrMSG = "sign in~ There is 1 client online now.\n";
+			} else {
+				myStrMSG = "sign in~ " + "There are " + myClientList.size()+" online now.\n";
+			}
+			
+			sendMessageToAllClient();
+		}
+		public void run() {
+			try {
+				while((myStrMSG = dis.readUTF()) != null) {
+					jTextArea.append(myStrMSG+ "\n");
+					messageRecog(myStrMSG);
+				}
+			} catch (Exception e) {
+				
+			}
+		}
+
+        // server send group chat message to every client
+		public void sendMessageToAllClient() throws IOException {
+			System.out.println(myStrMSG);
+			for (Socket client:myClientList) {
+				DataOutputStream toclient;
+				toclient = new DataOutputStream(client.getOutputStream());
+				String toclientMessage = myStrMSG;
+				toclientMessage = "message_all" + "["+ ipAddress + "]" + "["+ port + "]" + ":" + myStrMSG;
+				toclient.writeUTF(toclientMessage);
+			}
+		}
+
+		public void sendMessageToOneClient() throws IOException {
+			String toclientMessage = myStrMSG.replace("message_one","");
+			for (Socket client:myClientList) {
+				if (toclientMessage.startsWith("[" + client.getInetAddress() + "]" + "[" + client.getPort() + "]")) {
+					toclientMessage = "message_one" + toclientMessage;
+					DataOutputStream toclient;
+					toclient = new DataOutputStream(client.getOutputStream());
+					System.out.println("Server send back message:"+toclientMessage);
+					toclient.writeUTF(toclientMessage);
+					jTextArea.append("p2p message:" + toclientMessage + "\n");
+			    }
+		    }
+	    }
+
+	    public void sendClientList() throws IOException {
+			String sendList = "request_list";
+			DataOutputStream toclient;
+			toclient = new DataOutputStream(client.getOutputStream());
+			for(Socket client:myClientList){
+				sendList += "["+client.getInetAddress()+"]" + "["+client.getPort()+"]" + "\n";				
+			}
+			toclient.writeUTF(sendList);	
+		}
+
+		public void sendClientName() throws IOException {
+			String msg = "request_clientname" + "["+ipAddress+"]" + "["+port+"]";
+			toclient= new DataOutputStream(client.getOutputStream());
+			toclient.writeUTF(msg);
+		}
+
+		// protocol, recognize message type
+	    public void messageRecog(String message) throws IOException {
+	    	if (message.startsWith("request_list")) {
+				sendClientList();
+			} else if (message.startsWith("message_all")) {
+				sendMessageToAllClient();
+			} else if (message.startsWith("message_one")) {
+				sendMessageToOneClient();
+			} else if (message.startsWith("close")) {
+				removeConnection();
+			} else if (message.startsWith("request_clientname")) {
+				sendClientName();
+			}
+	    }
+
+	public void removeConnection() {
+		jTextArea.append("remove client" + "\n");
+		for (int i = 0, len = myClientList.size(); i < len; i++) {
+			if (myClientList.get(i) == client) {
+				myClientList.remove(i);
+				--len;
+				--i;
+			}
+		}
+		
+		try {
+			sendNewClientList();
+		} catch (IOException e) {
+			System.out.println("error occurs!");
+		}
+
+		try {
+			client.close();
+		} catch (IOException ie) {
+			ie.printStackTrace();
+		}
+	}
+
+
+}
+	public static void main(String[] args) {
+		new Server();
+	}
+
+}
